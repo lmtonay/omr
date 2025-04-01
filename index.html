@@ -8,13 +8,19 @@
       body {
         font-family: Arial, sans-serif;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
+        justify-content: center;
         min-height: 100vh;
         background: url("https://source.unsplash.com/1600x900/?abstract")
           no-repeat center center/cover;
         padding: 10px;
         overflow-y: auto;
+      }
+      .timer {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
       }
       .container {
         display: flex;
@@ -88,15 +94,16 @@
       }
     </style>
   </head>
-  <body style="display: flex; flex-direction: column">
-    <label
-      ><input
+  <body>
+    <div class="timer" id="countdown">30:00</div>
+    <label>
+      <input
         type="checkbox"
         id="evaluationMode"
         onclick="enableEvaluationMode()"
       />
-      Evaluation Mode</label
-    >
+      Evaluation Mode
+    </label>
     <div class="container" id="omrSheet">
       <div class="column" id="col1"></div>
       <div class="column" id="col2"></div>
@@ -109,7 +116,9 @@
       let currentIndex = 0;
       const allQuestions = [];
       let evaluationModeActive = false;
+      let timerElapsed = 0;
 
+      // Function to create a question block with options
       function createQuestion(index) {
         const questionDiv = document.createElement("div");
         questionDiv.classList.add("question");
@@ -130,15 +139,16 @@
         return questionDiv;
       }
 
+      // Function to select an option and handle marking
       function selectOption(optionsDiv, selectedOption, questionDiv) {
         if (evaluationModeActive) {
           const previousSelected = optionsDiv.querySelector(".selected");
           if (previousSelected && previousSelected !== selectedOption) {
             previousSelected.classList.add("wrong");
+            optionsDiv
+              .querySelectorAll(".option")
+              .forEach((opt) => (opt.onclick = null));
           }
-          optionsDiv
-            .querySelectorAll(".option")
-            .forEach((opt) => opt.classList.remove("selected"));
           selectedOption.classList.add("selected");
           return;
         }
@@ -149,12 +159,28 @@
         questionDiv.classList.add("answered");
       }
 
+      // Enable evaluation mode
       function enableEvaluationMode() {
         evaluationModeActive = true;
         document.getElementById("evaluationMode").disabled = true;
         document.getElementById("omrSheet").classList.add("evaluation-active");
+        document.getElementById("countdown").style.display = "none"; // Hide the timer
+        updateElapsedTime();
       }
 
+      // Function to display elapsed time
+      function updateElapsedTime() {
+        const interval = setInterval(() => {
+          timerElapsed++;
+          const minutes = Math.floor(timerElapsed / 60);
+          const seconds = timerElapsed % 60;
+          document.getElementById("countdown").textContent = `${minutes}:${
+            seconds < 10 ? "0" : ""
+          }${seconds}`;
+        }, 1000);
+      }
+
+      // Create all 30 questions and divide them into 3 columns
       for (let i = 1; i <= 30; i++) {
         const questionDiv = createQuestion(i);
         if (i <= 10) document.getElementById("col1").appendChild(questionDiv);
@@ -163,6 +189,7 @@
         else document.getElementById("col3").appendChild(questionDiv);
       }
 
+      // Key mapping for autofilling options
       document.addEventListener("keydown", (event) => {
         if (
           keyMap.hasOwnProperty(event.key) &&
@@ -178,6 +205,27 @@
           currentIndex++;
         }
       });
+
+      // Start countdown from 30 minutes
+      function startCountdown(duration) {
+        let timer = duration,
+          minutes,
+          seconds;
+        const interval = setInterval(() => {
+          minutes = Math.floor(timer / 60);
+          seconds = timer % 60;
+          document.getElementById("countdown").textContent = `${minutes}:${
+            seconds < 10 ? "0" : ""
+          }${seconds}`;
+          if (--timer < 0) {
+            clearInterval(interval);
+            enableEvaluationMode();
+          }
+        }, 1000);
+      }
+
+      // Start the countdown for 30 minutes
+      startCountdown(30 * 60);
     </script>
   </body>
 </html>
